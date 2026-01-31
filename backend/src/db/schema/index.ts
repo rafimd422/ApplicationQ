@@ -1,4 +1,4 @@
-// Export all schema tables
+
 export * from "./users";
 export * from "./staff";
 export * from "./services";

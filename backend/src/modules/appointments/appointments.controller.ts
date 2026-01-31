@@ -12,8 +12,8 @@ import {
 } from "./appointments.validation.js";
 import { eq, and, count } from "drizzle-orm";
 import { ApiError } from "../../utils/apiError.js";
-import { logActivity } from "../../utils/activityLogger.js";
 import * as appointmentService from "./appointments.service.js";
+import { logActivity } from "@/utils/activityLogger.js";
 
 export const getAllAppointments = async (
   req: Request,

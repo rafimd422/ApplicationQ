@@ -10,7 +10,7 @@ import { staffTypeEnum } from "./staff";
 export const services = pgTable("services", {
   id: uuid("id").defaultRandom().primaryKey(),
   serviceName: varchar("service_name", { length: 255 }).notNull(),
-  duration: integer("duration").notNull(), // in minutes: 15, 30, 60
+  duration: integer("duration").notNull(),
   requiredStaffType: staffTypeEnum("required_staff_type").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

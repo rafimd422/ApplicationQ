@@ -27,7 +27,7 @@ export const appointments = pgTable(
     serviceId: uuid("service_id")
       .notNull()
       .references(() => services.id),
-    staffId: uuid("staff_id").references(() => staff.id), // nullable - can be unassigned
+    staffId: uuid("staff_id").references(() => staff.id),
     appointmentDate: date("appointment_date").notNull(),
     appointmentTime: time("appointment_time").notNull(),
     status: appointmentStatusEnum("status").default("Scheduled").notNull(),
