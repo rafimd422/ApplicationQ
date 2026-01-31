@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { db } from "../../config/index.js";
 import { services } from "../../db/schema/index.js";
-import { serviceSchema, updateServiceSchema } from "../../validators/index.js";
+import { serviceSchema, updateServiceSchema } from "./services.validation.js";
 import { eq } from "drizzle-orm";
 import { ApiError } from "../../utils/apiError.js";
 

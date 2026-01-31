@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { db } from "../../config/index.js";
 import { staff, appointments } from "../../db/schema/index.js";
-import { staffSchema, updateStaffSchema } from "../../validators/index.js";
+import { staffSchema, updateStaffSchema } from "./staff.validation.js";
 import { eq, and, count } from "drizzle-orm";
 import { ApiError } from "../../utils/apiError.js";
 

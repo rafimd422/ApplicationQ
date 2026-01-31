@@ -9,7 +9,7 @@ import {
 import {
   appointmentSchema,
   updateAppointmentSchema,
-} from "../../validators/index.js";
+} from "./appointments.validation.js";
 import { eq, and, count } from "drizzle-orm";
 import { ApiError } from "../../utils/apiError.js";
 import { logActivity } from "../../utils/activityLogger.js";

@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
 import { db } from "../../config/index.js";
 import { users } from "../../db/schema/index.js";
-import { signupSchema, loginSchema } from "../../validators/index.js";
+import { signupSchema, loginSchema } from "./auth.validation.js";
 import { eq } from "drizzle-orm";
 import { AuthenticatedRequest } from "../../middlewares/auth.middleware.js";
 import jwt from "jsonwebtoken";
