@@ -8,8 +8,8 @@ import {
 } from "../../db/schema/index.js";
 import { eq, and, asc, count } from "drizzle-orm";
 import { ApiError } from "../../utils/apiError.js";
-import { logActivity } from "../../utils/activityLogger.js";
 import dayjs from "dayjs";
+import { logActivity } from "@/utils/activityLogger.js";
 
 export const getWaitingQueue = async (
   req: Request,
