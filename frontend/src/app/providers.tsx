@@ -11,8 +11,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <StyledComponentsRegistry>
       <ThemeProvider theme={theme}>
         <GlobalStyles />
-        {/* <ToastProvider>{children}</ToastProvider> */}
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </ThemeProvider>
     </StyledComponentsRegistry>
   );
