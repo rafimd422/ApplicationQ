@@ -38,7 +38,7 @@ export const signup = async (
       })
       .returning({ id: users.id, email: users.email, name: users.name });
 
-    const token = jwt.sign({ userId: newUser.id }, config.jwtSecret, {
+    const token = jwt.sign({ userId: newUser.id }, config.jwtSecret!, {
       expiresIn: config.jwtExpiresIn as any,
     });
 
@@ -75,7 +75,7 @@ export const login = async (
       throw new ApiError("Invalid credentials", 401);
     }
 
-    const token = jwt.sign({ userId: user.id }, config.jwtSecret, {
+    const token = jwt.sign({ userId: user.id }, config.jwtSecret!, {
       expiresIn: config.jwtExpiresIn as any,
     });
 

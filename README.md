@@ -44,3 +44,92 @@ A mission-control center for business owners:
 - **Heatmap of Load**: Real-time visualization of staff workload (e.g., "3 of 5 capacity used") to prevent burnout.
 - **Activity Transparency**: A full audit trail of assignments and status changes for accountability.
 
+
+## 🛠 Tech Stack
+
+### Frontend (Modern SaaS UI)
+
+- **Next.js 14 (App Router)**: High-performance React framework.
+- **TypeScript**: Type-safe development.
+- **Styled-Components**: For a premium, customizable design system.
+- **Zustand**: Lightweight and efficient state management.
+- **Zod & React Hook Form**: Robust validation and form handling.
+
+### Backend (Scalable Modular Architecture)
+
+- **Node.js & Express**: Fast, unopinionated server infrastructure.
+- **Modular Feature-Based Architecture**: Grouped by business logic (Auth, Staff, Appointments) for rapid scaling.
+- **Drizzle ORM + PostgreSQL**: Type-safe database interactions with a relational foundation.
+- **JWT Authentication**: Secure, stateless user sessions.
+
+---
+
+## 📁 Project Architecture
+
+Following a recent architectural refactor, the backend now follows a **Modular Feature-Based Structure**, ensuring that as the business grows, the code remains manageable.
+
+```
+backend/src/
+├── app.ts                 # Global middleware & app initialization
+├── server.ts              # Database connection & bootstrap logic
+├── config/                # Centralized environment & DB config
+├── modules/               # Independent feature modules
+│   ├── appointments/      # Conflict logic & scheduling
+│   ├── auth/              # Identity management
+│   ├── staff/             # Resource management
+│   ├── services/          # Product/Service definitions
+│   └── queue/             # Assignment & prioritization logic
+├── middlewares/           # Shared guards (Auth, Error handling)
+└── utils/                 # Cross-cutting utilities (Logger, ApiResponse)
+```
+
+---
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+
+- Node.js 18+
+- PostgreSQL 14+
+
+### 2. Database Setup
+
+```bash
+createdb appointment_queue_db
+```
+
+### 3. Backend Setup
+
+```bash
+cd backend
+npm install
+cp .env.example .env # Update with your DB credentials
+npm run db:push     # Synchronize schema
+npm run dev         # Start at http://localhost:3001
+```
+
+### 4. Frontend Setup
+
+```bash
+cd frontend
+npm install
+npm run dev         # Start at http://localhost:3000
+```
+
+---
+
+## 📡 Key API Endpoints
+
+| Area             | Features                                         |
+| ---------------- | ------------------------------------------------ |
+| **Auth**         | Login, Signup, Session Management                |
+| **Appointments** | Create, Cancel, Complete, Conflict Check         |
+| **Staff**        | Fleet Management, Capacity, Availability         |
+| **Queue**        | Auto-Assign, Manual Assignment, Priority List    |
+| **Stats**        | Global Performance Metrics & Staff Load Heatmaps |
+
+---
+
+## 📝 License
+
+MIT License - Developed as a high-performance, modular appointment management solution.

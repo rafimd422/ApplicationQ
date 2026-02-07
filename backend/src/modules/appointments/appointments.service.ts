@@ -2,8 +2,7 @@ import { db } from "../../config/index.js";
 import {
   appointments,
   services,
-  waitingQueue,
-  staff,
+  waitingQueue
 } from "../../db/schema/index.js";
 import { eq, and, ne, count } from "drizzle-orm";
 import dayjs from "dayjs";
