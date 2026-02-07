@@ -9,7 +9,6 @@ export const api = axios.create({
   },
 });
 
-// Add auth token to requests
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("token");
@@ -20,7 +19,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle auth errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -35,7 +33,6 @@ api.interceptors.response.use(
   },
 );
 
-// Auth API
 export const authApi = {
   signup: (data: { email: string; password: string; name: string }) =>
     api.post("/auth/signup", data),
@@ -44,7 +41,6 @@ export const authApi = {
   getMe: () => api.get("/auth/me"),
 };
 
-// Staff API
 export const staffApi = {
   getAll: () => api.get("/staff"),
   getById: (id: string) => api.get(`/staff/${id}`),
@@ -70,7 +66,6 @@ export const staffApi = {
     api.get("/staff/availability/all", { params: { date } }),
 };
 
-// Services API
 export const servicesApi = {
   getAll: () => api.get("/services"),
   getById: (id: string) => api.get(`/services/${id}`),
@@ -90,7 +85,6 @@ export const servicesApi = {
   delete: (id: string) => api.delete(`/services/${id}`),
 };
 
-// Appointments API
 export const appointmentsApi = {
   getAll: (params?: { date?: string; staffId?: string; status?: string }) =>
     api.get("/appointments", { params }),
@@ -118,7 +112,6 @@ export const appointmentsApi = {
   noShow: (id: string) => api.post(`/appointments/${id}/no-show`),
 };
 
-// Queue API
 export const queueApi = {
   getAll: () => api.get("/queue"),
   autoAssign: () => api.post("/queue/assign"),
@@ -126,14 +119,12 @@ export const queueApi = {
     api.post(`/queue/${queueId}/assign/${staffId}`),
 };
 
-// Dashboard API
 export const dashboardApi = {
   getStats: () => api.get("/dashboard/stats"),
   getStaffLoad: (date?: string) =>
     api.get("/dashboard/staff-load", { params: { date } }),
 };
 
-// Activity API
 export const activityApi = {
   getRecent: (limit?: number) => api.get("/activity", { params: { limit } }),
 };

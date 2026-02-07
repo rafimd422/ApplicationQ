@@ -11,77 +11,36 @@ import {
   LoadIndicator,
   ActivityList,
   ActivityItem,
+  ActivityIcon,
   ActivityTime,
   ActivityText,
   LoadingText,
 } from "./Dashboard.styles";
-import { useEffect, useState } from "react";
+import {
+  useDashboardStats,
+  useStaffLoad,
+  useRecentActivity,
+} from "@/hooks/api/useDashboard";
 import { PageContainer } from "@/components/layout";
 import { StatCard, Card, CardHeader, Badge, Button } from "@/components/ui";
-import { dashboardApi, activityApi } from "@/services/api";
 import dayjs from "dayjs";
 
-interface DashboardStats {
-  today: string;
-  totalAppointments: number;
-  completed: number;
-  pending: number;
-  cancelled: number;
-  noShow: number;
-  waitingQueueCount: number;
-  totalStaff: number;
-  availableStaff: number;
-}
-
-interface StaffLoad {
-  id: string;
-  name: string;
-  staffType: string;
-  currentAppointments: number;
-  dailyCapacity: number;
-  loadStatus: "OK" | "Booked";
-}
-
-interface ActivityLog {
-  id: string;
-  action: string;
-  createdAt: string;
-}
+import { DashboardStats, StaffLoad, ActivityLog } from "@/types/dashboard";
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [staffLoad, setStaffLoad] = useState<StaffLoad[]>([]);
-  const [activities, setActivities] = useState<ActivityLog[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: stats, isLoading: isLoadingStats } = useDashboardStats();
+  const { data: staffLoad, isLoading: isLoadingStaff } = useStaffLoad();
+  const { data: recentActivity, isLoading: isLoadingActivity } =
+    useRecentActivity(5);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [statsRes, staffRes, activityRes] = await Promise.all([
-          dashboardApi.getStats(),
-          dashboardApi.getStaffLoad(),
-          activityApi.getRecent(5),
-        ]);
-        setStats(statsRes.data);
-        setStaffLoad(staffRes.data.staffLoad);
-        setActivities(activityRes.data.logs);
-      } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const getDayName = (dayCount: number) => {
+    return dayjs().add(dayCount, "day").format("ddd");
+  };
 
-    fetchData();
-  }, []);
-
-  if (isLoading) {
+  if (isLoadingStats || isLoadingStaff || isLoadingActivity) {
     return (
-      <PageContainer
-        title="Dashboard"
-        description="Overview of your appointment system"
-      >
-        <LoadingText>Loading dashboard...</LoadingText>
+      <PageContainer title="Dashboard" description="Overview of your business">
+        <LoadingText>Loading dashboard data...</LoadingText>
       </PageContainer>
     );
   }
@@ -188,7 +147,7 @@ export default function DashboardPage() {
             {staffLoad.length === 0 ? (
               <LoadingText>No staff members found</LoadingText>
             ) : (
-              staffLoad.map((staff) => (
+              staffLoad.map((staff: StaffLoad) => (
                 <StaffLoadItem key={staff.id}>
                   <StaffInfo>
                     <StaffAvatar>{staff.name.charAt(0)}</StaffAvatar>
@@ -219,15 +178,19 @@ export default function DashboardPage() {
             description="Latest actions in the system"
           />
           <ActivityList>
-            {activities.length === 0 ? (
+            {recentActivity.length === 0 ? (
               <LoadingText>No recent activity</LoadingText>
             ) : (
-              activities.map((activity) => (
+              recentActivity.map((activity: ActivityLog) => (
                 <ActivityItem key={activity.id}>
-                  <ActivityTime>
-                    {dayjs(activity.createdAt).format("h:mm A")}
-                  </ActivityTime>
-                  <ActivityText>{activity.action}</ActivityText>
+                  <ActivityIcon>
+                    {activity.action.includes("created") ? "📅" : "👤"}
+                  </ActivityIcon>
+                  <ActivityText>
+                    <strong>{activity.userName}</strong> {activity.action}
+                    <br />
+                    <small>{dayjs(activity.timestamp).fromNow()}</small>
+                  </ActivityText>
                 </ActivityItem>
               ))
             )}

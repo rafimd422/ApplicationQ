@@ -8,10 +8,19 @@ import {
   StaffAvailability,
   WarningText,
 } from "./Appointments.styles";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useAppointments } from "@/hooks/api/useAppointments";
+import { useStaff } from "@/hooks/api/useStaff";
+import { useServices } from "@/hooks/api/useServices";
+import {
+  appointmentSchema,
+  AppointmentForm,
+} from "@/schemas/appointment.schema";
+import { Appointment } from "@/types/appointment";
+import { Staff } from "@/types/staff";
+import { Service } from "@/types/service";
 import dayjs from "dayjs";
 import { PageContainer } from "@/components/layout";
 import {
@@ -23,63 +32,33 @@ import {
   ModalFooter,
   StatusBadge,
   ConfirmModal,
-  useToast,
 } from "@/components/ui";
-import { appointmentsApi, servicesApi, staffApi } from "@/services/api";
-
-const appointmentSchema = z.object({
-  customerName: z.string().min(1, "Customer name is required"),
-  serviceId: z.string().min(1, "Service is required"),
-  staffId: z.string().optional(),
-  appointmentDate: z.string().min(1, "Date is required"),
-  appointmentTime: z.string().min(1, "Time is required"),
-});
-
-type AppointmentForm = z.infer<typeof appointmentSchema>;
-
-interface Appointment {
-  id: string;
-  customerName: string;
-  serviceId: string;
-  serviceName: string;
-  staffId: string | null;
-  staffName: string | null;
-  appointmentDate: string;
-  appointmentTime: string;
-  status: "Scheduled" | "Completed" | "Cancelled" | "No-Show";
-}
-
-interface Service {
-  id: string;
-  serviceName: string;
-  duration: number;
-  requiredStaffType: string;
-}
-
-interface Staff {
-  id: string;
-  name: string;
-  staffType: string;
-  dailyCapacity: number;
-  currentAppointments?: number;
-  isAvailable?: boolean;
-}
 
 export default function AppointmentsPage() {
-  const { addToast } = useToast();
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
-  const [staffList, setStaffList] = useState<Staff[]>([]);
-  const [filteredStaff, setFilteredStaff] = useState<Staff[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    date: dayjs().format("YYYY-MM-DD"),
+    staffId: "",
+    status: "",
+  });
+  const {
+    appointments,
+    isLoading: isLoadingAppointments,
+    createAppointment,
+    updateAppointment,
+    cancelAppointment,
+    completeAppointment,
+    noShowAppointment,
+    isSubmitting,
+  } = useAppointments(filters);
+  const [conflictError, setConflictError] = useState<string | null>(null);
+  const { staff, isLoading: isLoadingStaff } = useStaff();
+  const { services, isLoading: isLoadingServices } = useServices();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [editingAppointment, setEditingAppointment] =
     useState<Appointment | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [conflictError, setConflictError] = useState<string | null>(null);
-  const [filterDate, setFilterDate] = useState(dayjs().format("YYYY-MM-DD"));
 
   const {
     register,
@@ -97,57 +76,6 @@ export default function AppointmentsPage() {
 
   const selectedServiceId = watch("serviceId");
   const selectedDate = watch("appointmentDate");
-
-  const fetchAppointments = async () => {
-    try {
-      const response = await appointmentsApi.getAll({ date: filterDate });
-      setAppointments(response.data.appointments);
-    } catch (error) {
-      addToast("error", "Failed to load appointments");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchServices = async () => {
-    try {
-      const response = await servicesApi.getAll();
-      setServices(response.data.services);
-    } catch (error) {
-      console.error("Failed to load services");
-    }
-  };
-
-  const fetchStaffWithAvailability = async (
-    date: string,
-    requiredStaffType?: string,
-  ) => {
-    try {
-      const response = await staffApi.getAllAvailability(date);
-      let staff = response.data.staff;
-      if (requiredStaffType) {
-        staff = staff.filter((s: Staff) => s.staffType === requiredStaffType);
-      }
-      setFilteredStaff(staff);
-    } catch (error) {
-      console.error("Failed to load staff availability");
-    }
-  };
-
-  useEffect(() => {
-    fetchAppointments();
-    fetchServices();
-    fetchStaffWithAvailability(dayjs().format("YYYY-MM-DD"));
-  }, [filterDate]);
-
-  useEffect(() => {
-    if (selectedServiceId && selectedDate) {
-      const service = services.find((s) => s.id === selectedServiceId);
-      if (service) {
-        fetchStaffWithAvailability(selectedDate, service.requiredStaffType);
-      }
-    }
-  }, [selectedServiceId, selectedDate, services]);
 
   const openCreateModal = () => {
     setEditingAppointment(null);
@@ -176,74 +104,33 @@ export default function AppointmentsPage() {
   };
 
   const onSubmit = async (data: AppointmentForm) => {
-    setIsSubmitting(true);
-    setConflictError(null);
-    try {
-      if (editingAppointment) {
-        await appointmentsApi.update(editingAppointment.id, {
-          ...data,
-          staffId: data.staffId || undefined,
-        });
-        addToast("success", "Appointment updated successfully");
-      } else {
-        const response = await appointmentsApi.create({
-          ...data,
-          staffId: data.staffId || null,
-        });
-        if (response.data.addedToQueue) {
-          addToast("warning", "Appointment added to waiting queue");
-        } else {
-          addToast("success", "Appointment created successfully");
-        }
-      }
+    if (!conflictError) {
+      // Only close modal if no conflict error
       setIsModalOpen(false);
-      fetchAppointments();
-    } catch (error: any) {
-      const errorMsg = error.response?.data?.error || "Operation failed";
-      if (errorMsg.includes("already has an appointment")) {
-        setConflictError(errorMsg);
-      } else {
-        addToast("error", errorMsg);
-      }
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   const handleCancel = async () => {
     if (!cancellingId) return;
-    setIsSubmitting(true);
     try {
-      await appointmentsApi.cancel(cancellingId);
-      addToast("success", "Appointment cancelled");
+      await cancelAppointment(cancellingId);
       setIsCancelModalOpen(false);
       setCancellingId(null);
-      fetchAppointments();
-    } catch (error: any) {
-      addToast("error", error.response?.data?.error || "Cancel failed");
-    } finally {
-      setIsSubmitting(false);
+    } catch (error) {
+      // Error is handled by hook's toast
     }
+  };
+
+  const handleStatusChange = async (id: string, status: string) => {
+    await updateAppointment({ id, data: { status } });
   };
 
   const handleComplete = async (id: string) => {
-    try {
-      await appointmentsApi.complete(id);
-      addToast("success", "Appointment marked as completed");
-      fetchAppointments();
-    } catch (error) {
-      addToast("error", "Failed to complete appointment");
-    }
+    await completeAppointment(id);
   };
 
   const handleNoShow = async (id: string) => {
-    try {
-      await appointmentsApi.noShow(id);
-      addToast("warning", "Appointment marked as no-show");
-      fetchAppointments();
-    } catch (error) {
-      addToast("error", "Failed to mark as no-show");
-    }
+    await noShowAppointment(id);
   };
 
   const columns = [
@@ -309,6 +196,11 @@ export default function AppointmentsPage() {
     },
   ];
 
+  const selectedService = services.find((s) => s.id === selectedServiceId);
+  const filteredStaffForService = staff.filter((s) =>
+    selectedService ? s.staffType === selectedService.requiredStaffType : true,
+  );
+
   return (
     <PageContainer
       title="Appointments"
@@ -319,8 +211,10 @@ export default function AppointmentsPage() {
         <FilterItem>
           <Input
             type="date"
-            value={filterDate}
-            onChange={(e) => setFilterDate(e.target.value)}
+            value={filters.date}
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, date: e.target.value }))
+            }
           />
         </FilterItem>
       </FilterBar>
@@ -328,7 +222,7 @@ export default function AppointmentsPage() {
       <Table
         columns={columns}
         data={appointments}
-        isLoading={isLoading}
+        isLoading={isLoadingAppointments}
         emptyMessage="No appointments for this date"
       />
 
@@ -375,23 +269,27 @@ export default function AppointmentsPage() {
 
           <div>
             <Select
-              label="Assign Staff (Optional)"
-              placeholder="Select staff or leave in queue"
+              label="Staff (Optional)"
               options={[
-                { value: "", label: "Add to waiting queue" },
-                ...filteredStaff.map((s) => ({
+                { value: "", label: "Auto-assign" },
+                ...filteredStaffForService.map((s: Staff) => ({
                   value: s.id,
-                  label: `${s.name} (${s.currentAppointments || 0}/${s.dailyCapacity})`,
+                  label: s.name,
                 })),
               ]}
               {...register("staffId")}
             />
-            {filteredStaff.length > 0 && (
+            {filteredStaffForService.length > 0 && (
               <StaffAvailability
-                $isAvailable={filteredStaff.some((s) => s.isAvailable)}
+                $isAvailable={filteredStaffForService.some(
+                  (s: Staff) => s.isAvailable,
+                )}
               >
-                {filteredStaff.filter((s) => s.isAvailable).length} staff
-                available
+                {
+                  filteredStaffForService.filter((s: Staff) => s.isAvailable)
+                    .length
+                }{" "}
+                staff available
               </StaffAvailability>
             )}
           </div>

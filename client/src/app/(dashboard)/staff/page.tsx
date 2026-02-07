@@ -1,10 +1,12 @@
 "use client";
 
 import { ActionButtons, Form } from "./Staff.styles";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useStaff } from "@/hooks/api/useStaff";
+import { staffSchema, StaffForm } from "@/schemas/staff.schema";
+import { Staff } from "@/types/staff";
 import { PageContainer } from "@/components/layout";
 import {
   Button,
@@ -17,34 +19,23 @@ import {
   ConfirmModal,
   useToast,
 } from "@/components/ui";
-import { staffApi } from "@/services/api";
-
-const staffSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  staffType: z.enum(["Doctor", "Consultant", "Support Agent"]),
-  dailyCapacity: z.string().regex(/^\d+$/, "Must be a number"),
-  availabilityStatus: z.enum(["Available", "On Leave"]),
-});
-
-type StaffForm = z.infer<typeof staffSchema>;
-
-interface Staff {
-  id: string;
-  name: string;
-  staffType: "Doctor" | "Consultant" | "Support Agent";
-  dailyCapacity: number;
-  availabilityStatus: "Available" | "On Leave";
-}
 
 export default function StaffPage() {
-  const { addToast } = useToast();
-  const [staffList, setStaffList] = useState<Staff[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    staff,
+    isLoading,
+    createStaff,
+    updateStaff,
+    deleteStaff,
+    isCreating,
+    isUpdating,
+    isDeleting,
+  } = useStaff();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
@@ -58,21 +49,6 @@ export default function StaffPage() {
       availabilityStatus: "Available",
     },
   });
-
-  const fetchStaff = async () => {
-    try {
-      const response = await staffApi.getAll();
-      setStaffList(response.data.staff);
-    } catch (error) {
-      addToast("error", "Failed to load staff");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStaff();
-  }, []);
 
   const openCreateModal = () => {
     setEditingStaff(null);
@@ -96,43 +72,20 @@ export default function StaffPage() {
     setIsModalOpen(true);
   };
 
-  const onSubmit = async (data: StaffForm) => {
-    setIsSubmitting(true);
-    try {
-      const payload = {
-        ...data,
-        dailyCapacity: parseInt(data.dailyCapacity, 10),
-      };
-
-      if (editingStaff) {
-        await staffApi.update(editingStaff.id, payload);
-        addToast("success", "Staff updated successfully");
-      } else {
-        await staffApi.create(payload);
-        addToast("success", "Staff created successfully");
-      }
-      setIsModalOpen(false);
-      fetchStaff();
-    } catch (error: any) {
-      addToast("error", error.response?.data?.error || "Operation failed");
-    } finally {
-      setIsSubmitting(false);
+  const onSubmit = (data: StaffForm) => {
+    if (editingStaff) {
+      updateStaff({ id: editingStaff.id, data });
+    } else {
+      createStaff(data);
     }
+    setIsModalOpen(false);
   };
 
-  const handleDelete = async () => {
-    if (!deletingId) return;
-    setIsSubmitting(true);
-    try {
-      await staffApi.delete(deletingId);
-      addToast("success", "Staff deleted successfully");
+  const handleDelete = () => {
+    if (deletingId) {
+      deleteStaff(deletingId);
       setIsDeleteModalOpen(false);
       setDeletingId(null);
-      fetchStaff();
-    } catch (error: any) {
-      addToast("error", error.response?.data?.error || "Delete failed");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -184,7 +137,7 @@ export default function StaffPage() {
     >
       <Table
         columns={columns}
-        data={staffList}
+        data={staff}
         isLoading={isLoading}
         emptyMessage="No staff members found"
       />
@@ -239,8 +192,12 @@ export default function StaffPage() {
             >
               Cancel
             </Button>
-            <Button type="submit" isLoading={isSubmitting}>
-              {editingStaff ? "Update" : "Create"}
+            <Button
+              type="submit"
+              fullWidth
+              isLoading={isCreating || isUpdating}
+            >
+              {editingStaff ? "Update Member" : "Add Member"}
             </Button>
           </ModalFooter>
         </Form>
@@ -250,11 +207,11 @@ export default function StaffPage() {
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDelete}
-        title="Delete Staff"
+        title="Delete Staff Member"
         message="Are you sure you want to delete this staff member? This action cannot be undone."
         confirmText="Delete"
         variant="danger"
-        isLoading={isSubmitting}
+        isLoading={isDeleting}
       />
     </PageContainer>
   );

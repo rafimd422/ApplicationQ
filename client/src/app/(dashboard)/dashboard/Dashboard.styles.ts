@@ -97,3 +97,15 @@ export const LoadingText = styled.div`
   text-align: center;
   color: ${({ theme }) => theme.colors.textSecondary};
 `;
+
+export const ActivityIcon = styled.div`
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: ${(props) => props.theme.colors.background};
+  border: 1px solid ${(props) => props.theme.colors.border};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+`;

@@ -1,10 +1,12 @@
 "use client";
 
 import { ActionButtons, Form } from "./Services.styles";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useServices } from "@/hooks/api/useServices";
+import { serviceSchema, ServiceForm } from "@/schemas/service.schema";
+import { Service } from "@/types/service";
 import { PageContainer } from "@/components/layout";
 import {
   Button,
@@ -15,34 +17,24 @@ import {
   ModalFooter,
   Badge,
   ConfirmModal,
-  useToast,
 } from "@/components/ui";
-import { servicesApi } from "@/services/api";
-
-const serviceSchema = z.object({
-  serviceName: z.string().min(1, "Service name is required"),
-  duration: z.enum(["15", "30", "60"]),
-  requiredStaffType: z.enum(["Doctor", "Consultant", "Support Agent"]),
-});
-
-type ServiceForm = z.infer<typeof serviceSchema>;
-
-interface Service {
-  id: string;
-  serviceName: string;
-  duration: number;
-  requiredStaffType: "Doctor" | "Consultant" | "Support Agent";
-}
 
 export default function ServicesPage() {
-  const { addToast } = useToast();
-  const [servicesList, setServicesList] = useState<Service[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    services,
+    isLoading,
+    createService,
+    updateService,
+    deleteService,
+    isCreating,
+    isUpdating,
+    isDeleting,
+  } = useServices();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
@@ -56,21 +48,6 @@ export default function ServicesPage() {
       requiredStaffType: "Doctor",
     },
   });
-
-  const fetchServices = async () => {
-    try {
-      const response = await servicesApi.getAll();
-      setServicesList(response.data.services);
-    } catch (error) {
-      addToast("error", "Failed to load services");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchServices();
-  }, []);
 
   const openCreateModal = () => {
     setEditingService(null);
@@ -88,38 +65,20 @@ export default function ServicesPage() {
     setIsModalOpen(true);
   };
 
-  const onSubmit = async (data: ServiceForm) => {
-    setIsSubmitting(true);
-    try {
-      if (editingService) {
-        await servicesApi.update(editingService.id, data);
-        addToast("success", "Service updated successfully");
-      } else {
-        await servicesApi.create(data);
-        addToast("success", "Service created successfully");
-      }
-      setIsModalOpen(false);
-      fetchServices();
-    } catch (error: any) {
-      addToast("error", error.response?.data?.error || "Operation failed");
-    } finally {
-      setIsSubmitting(false);
+  const onSubmit = (data: ServiceForm) => {
+    if (editingService) {
+      updateService({ id: editingService.id, data });
+    } else {
+      createService(data);
     }
+    setIsModalOpen(false);
   };
 
-  const handleDelete = async () => {
-    if (!deletingId) return;
-    setIsSubmitting(true);
-    try {
-      await servicesApi.delete(deletingId);
-      addToast("success", "Service deleted successfully");
+  const handleDelete = () => {
+    if (deletingId) {
+      deleteService(deletingId);
       setIsDeleteModalOpen(false);
       setDeletingId(null);
-      fetchServices();
-    } catch (error: any) {
-      addToast("error", error.response?.data?.error || "Delete failed");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -177,7 +136,7 @@ export default function ServicesPage() {
     >
       <Table
         columns={columns}
-        data={servicesList}
+        data={services}
         isLoading={isLoading}
         emptyMessage="No services found"
       />
@@ -225,7 +184,7 @@ export default function ServicesPage() {
             >
               Cancel
             </Button>
-            <Button type="submit" isLoading={isSubmitting}>
+            <Button type="submit" isLoading={isCreating || isUpdating}>
               {editingService ? "Update" : "Create"}
             </Button>
           </ModalFooter>
@@ -240,7 +199,7 @@ export default function ServicesPage() {
         message="Are you sure you want to delete this service? This action cannot be undone."
         confirmText="Delete"
         variant="danger"
-        isLoading={isSubmitting}
+        isLoading={isDeleting}
       />
     </PageContainer>
   );

@@ -15,99 +15,32 @@ import {
   EmptyQueue,
   HeaderActions,
 } from "./Queue.styles";
-import { useEffect, useState } from "react";
+import { useQueue } from "@/hooks/api/useQueue";
+import { useStaff } from "@/hooks/api/useStaff";
+import { Staff } from "@/types/staff";
+import { QueueEntry } from "@/types/queue";
 import dayjs from "dayjs";
 import { PageContainer } from "@/components/layout";
-import { Button, Card, Badge, Select, useToast } from "@/components/ui";
-import { queueApi, staffApi } from "@/services/api";
-
-interface QueueEntry {
-  id: string;
-  queuePosition: number;
-  addedAt: string;
-  appointmentId: string;
-  customerName: string;
-  serviceName: string;
-  requiredStaffType: string;
-  serviceDuration: number;
-  appointmentDate: string;
-  appointmentTime: string;
-}
-
-interface Staff {
-  id: string;
-  name: string;
-  staffType: string;
-  dailyCapacity: number;
-  currentAppointments?: number;
-  isAvailable?: boolean;
-}
+import { Button, Card, Badge, Select } from "@/components/ui";
 
 export default function QueuePage() {
-  const { addToast } = useToast();
-  const [queue, setQueue] = useState<QueueEntry[]>([]);
-  const [staffList, setStaffList] = useState<Staff[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAssigning, setIsAssigning] = useState(false);
-
-  const fetchQueue = async () => {
-    try {
-      const response = await queueApi.getAll();
-      setQueue(response.data.queue);
-    } catch (error) {
-      addToast("error", "Failed to load queue");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchStaff = async () => {
-    try {
-      const response = await staffApi.getAllAvailability(
-        dayjs().format("YYYY-MM-DD"),
-      );
-      setStaffList(response.data.staff);
-    } catch (error) {
-      console.error("Failed to load staff");
-    }
-  };
-
-  useEffect(() => {
-    fetchQueue();
-    fetchStaff();
-  }, []);
+  const {
+    queue,
+    isLoading: isLoadingQueue,
+    autoAssign,
+    isAutoAssigning,
+    manualAssign,
+    isManualAssigning,
+  } = useQueue();
+  const { staff: staffList, isLoading: isLoadingStaff } = useStaff();
 
   const handleAutoAssign = async () => {
-    setIsAssigning(true);
-    try {
-      const response = await queueApi.autoAssign();
-      if (response.data.assigned) {
-        addToast("success", response.data.message);
-        fetchQueue();
-        fetchStaff();
-      } else {
-        addToast("warning", response.data.message);
-      }
-    } catch (error: any) {
-      addToast("error", error.response?.data?.error || "Auto-assign failed");
-    } finally {
-      setIsAssigning(false);
-    }
+    await autoAssign();
   };
 
   const handleManualAssign = async (queueId: string, staffId: string) => {
     if (!staffId) return;
-    setIsAssigning(true);
-    try {
-      const response = await queueApi.manualAssign(queueId, staffId);
-      addToast("success", response.data.message);
-      fetchQueue();
-      fetchStaff();
-    } catch (error: any) {
-      addToast("error", error.response?.data?.error || "Assignment failed");
-    } finally {
-      setIsAssigning(false);
-    }
+    await manualAssign({ queueId, staffId });
   };
 
   const getOrdinal = (n: number) => {
@@ -122,7 +55,7 @@ export default function QueuePage() {
     );
   };
 
-  if (isLoading) {
+  if (isLoadingQueue) {
     return (
       <PageContainer
         title="Waiting Queue"
@@ -142,7 +75,7 @@ export default function QueuePage() {
       action={
         queue.length > 0 && (
           <HeaderActions>
-            <Button onClick={handleAutoAssign} isLoading={isAssigning}>
+            <Button onClick={handleAutoAssign} isLoading={isAutoAssigning}>
               Assign From Queue
             </Button>
           </HeaderActions>
@@ -201,12 +134,12 @@ export default function QueuePage() {
                       placeholder="Select staff"
                       options={availableStaff.map((s) => ({
                         value: s.id,
-                        label: `${s.name} (${s.currentAppointments || 0}/${s.dailyCapacity})`,
+                        label: `${s.name} (${s.dailyCapacity} max)`,
                       }))}
                       onChange={(e) =>
                         handleManualAssign(entry.id, e.target.value)
                       }
-                      disabled={isAssigning}
+                      disabled={isManualAssigning}
                     />
                   </AssignSelect>
                 </QueueActions>

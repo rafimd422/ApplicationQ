@@ -10,12 +10,11 @@ import {
   EmptyState,
   LoadingState,
 } from "./Activity.styles";
-import { useEffect, useState } from "react";
+import { useRecentActivity } from "@/hooks/api/useDashboard";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { PageContainer } from "@/components/layout";
-import { Card, useToast } from "@/components/ui";
-import { activityApi } from "@/services/api";
+import { Card } from "@/components/ui";
 
 dayjs.extend(relativeTime);
 
@@ -27,24 +26,7 @@ interface ActivityLog {
 }
 
 export default function ActivityPage() {
-  const { addToast } = useToast();
-  const [activities, setActivities] = useState<ActivityLog[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        const response = await activityApi.getRecent(50);
-        setActivities(response.data.logs);
-      } catch (error) {
-        addToast("error", "Failed to load activity logs");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchActivities();
-  }, []);
+  const { data: activities, isLoading } = useRecentActivity(50);
 
   const getActivityIcon = (action: string) => {
     if (action.includes("assigned")) {
@@ -140,7 +122,7 @@ export default function ActivityPage() {
           </EmptyState>
         ) : (
           <ActivityList>
-            {activities.map((activity) => (
+            {activities.map((activity: ActivityLog) => (
               <ActivityItem key={activity.id}>
                 <ActivityIcon>{getActivityIcon(activity.action)}</ActivityIcon>
                 <ActivityContent>
