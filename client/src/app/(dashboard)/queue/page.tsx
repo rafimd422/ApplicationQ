@@ -1,120 +1,25 @@
 "use client";
 
-import styled from "styled-components";
+import {
+  QueueList,
+  QueueItem,
+  QueuePosition,
+  QueueInfo,
+  CustomerInfo,
+  CustomerName,
+  ServiceInfo,
+  AppointmentDetails,
+  DetailItem,
+  QueueActions,
+  AssignSelect,
+  EmptyQueue,
+  HeaderActions,
+} from "./Queue.styles";
 import { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import { PageContainer } from "@/components/layout";
 import { Button, Card, Badge, Select, useToast } from "@/components/ui";
 import { queueApi, staffApi } from "@/services/api";
-
-const QueueList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`;
-
-const QueueItem = styled(Card)`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: ${({ theme }) => theme.spacing.md};
-  }
-`;
-
-const QueuePosition = styled.div`
-  width: 48px;
-  height: 48px;
-  border-radius: ${({ theme }) => theme.radii.full};
-  background: ${({ theme }) => theme.colors.primaryFaded};
-  color: ${({ theme }) => theme.colors.primary};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: ${({ theme }) => theme.fontWeights.bold};
-  font-size: ${({ theme }) => theme.fontSizes.lg};
-  flex-shrink: 0;
-`;
-
-const QueueInfo = styled.div`
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.lg};
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: ${({ theme }) => theme.spacing.sm};
-  }
-`;
-
-const CustomerInfo = styled.div`
-  min-width: 200px;
-`;
-
-const CustomerName = styled.div`
-  font-weight: ${({ theme }) => theme.fontWeights.semibold};
-  color: ${({ theme }) => theme.colors.text};
-  margin-bottom: 4px;
-`;
-
-const ServiceInfo = styled.div`
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  color: ${({ theme }) => theme.colors.textSecondary};
-`;
-
-const AppointmentDetails = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.md};
-  align-items: center;
-`;
-
-const DetailItem = styled.div`
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  color: ${({ theme }) => theme.colors.textSecondary};
-
-  span {
-    font-weight: ${({ theme }) => theme.fontWeights.medium};
-    color: ${({ theme }) => theme.colors.text};
-  }
-`;
-
-const QueueActions = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.sm};
-  align-items: center;
-`;
-
-const AssignSelect = styled.div`
-  min-width: 200px;
-`;
-
-const EmptyQueue = styled.div`
-  text-align: center;
-  padding: ${({ theme }) => theme.spacing.xxl};
-  color: ${({ theme }) => theme.colors.textSecondary};
-
-  svg {
-    width: 64px;
-    height: 64px;
-    margin-bottom: ${({ theme }) => theme.spacing.md};
-    opacity: 0.5;
-  }
-
-  h3 {
-    margin-bottom: ${({ theme }) => theme.spacing.sm};
-    color: ${({ theme }) => theme.colors.text};
-  }
-`;
-
-const HeaderActions = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
 
 interface QueueEntry {
   id: string;

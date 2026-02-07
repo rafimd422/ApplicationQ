@@ -1,109 +1,25 @@
 "use client";
 
-import styled from "styled-components";
+import {
+  StatsGrid,
+  ContentGrid,
+  StaffLoadList,
+  StaffLoadItem,
+  StaffInfo,
+  StaffAvatar,
+  StaffName,
+  LoadIndicator,
+  ActivityList,
+  ActivityItem,
+  ActivityTime,
+  ActivityText,
+  LoadingText,
+} from "./Dashboard.styles";
 import { useEffect, useState } from "react";
 import { PageContainer } from "@/components/layout";
 import { StatCard, Card, CardHeader, Badge, Button } from "@/components/ui";
 import { dashboardApi, activityApi } from "@/services/api";
 import dayjs from "dayjs";
-
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: ${({ theme }) => theme.spacing.lg};
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
-`;
-
-const ContentGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: ${({ theme }) => theme.spacing.xl};
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.lg}) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const StaffLoadList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const StaffLoadItem = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.background};
-  border-radius: ${({ theme }) => theme.radii.md};
-`;
-
-const StaffInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const StaffAvatar = styled.div`
-  width: 36px;
-  height: 36px;
-  border-radius: ${({ theme }) => theme.radii.full};
-  background: ${({ theme }) => theme.colors.primary};
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: ${({ theme }) => theme.fontWeights.semibold};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-`;
-
-const StaffName = styled.span`
-  font-weight: ${({ theme }) => theme.fontWeights.medium};
-`;
-
-const LoadIndicator = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  color: ${({ theme }) => theme.colors.textSecondary};
-`;
-
-const ActivityList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const ActivityItem = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.sm} 0;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-
-  &:last-child {
-    border-bottom: none;
-  }
-`;
-
-const ActivityTime = styled.span`
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  color: ${({ theme }) => theme.colors.textSecondary};
-  white-space: nowrap;
-  min-width: 70px;
-`;
-
-const ActivityText = styled.span`
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  color: ${({ theme }) => theme.colors.text};
-`;
-
-const LoadingText = styled.div`
-  padding: ${({ theme }) => theme.spacing.xl};
-  text-align: center;
-  color: ${({ theme }) => theme.colors.textSecondary};
-`;
 
 interface DashboardStats {
   today: string;

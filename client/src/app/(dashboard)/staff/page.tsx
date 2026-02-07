@@ -1,6 +1,6 @@
 "use client";
 
-import styled from "styled-components";
+import { ActionButtons, Form } from "./Staff.styles";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,17 +18,6 @@ import {
   useToast,
 } from "@/components/ui";
 import { staffApi } from "@/services/api";
-
-const ActionButtons = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.xs};
-`;
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`;
 
 const staffSchema = z.object({
   name: z.string().min(1, "Name is required"),

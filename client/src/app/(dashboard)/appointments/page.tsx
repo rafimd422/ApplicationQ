@@ -1,6 +1,13 @@
 "use client";
 
-import styled from "styled-components";
+import {
+  FilterBar,
+  FilterItem,
+  ActionButtons,
+  Form,
+  StaffAvailability,
+  WarningText,
+} from "./Appointments.styles";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,44 +26,6 @@ import {
   useToast,
 } from "@/components/ui";
 import { appointmentsApi, servicesApi, staffApi } from "@/services/api";
-
-const FilterBar = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.md};
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-  flex-wrap: wrap;
-`;
-
-const FilterItem = styled.div`
-  width: 200px;
-`;
-
-const ActionButtons = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.xs};
-`;
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`;
-
-const StaffAvailability = styled.div<{ $isAvailable: boolean }>`
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  color: ${({ $isAvailable, theme }) =>
-    $isAvailable ? theme.colors.success : theme.colors.warning};
-  margin-top: 4px;
-`;
-
-const WarningText = styled.div`
-  color: ${({ theme }) => theme.colors.error};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  background: ${({ theme }) => theme.colors.errorLight};
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border-radius: ${({ theme }) => theme.radii.md};
-  margin-bottom: ${({ theme }) => theme.spacing.md};
-`;
 
 const appointmentSchema = z.object({
   customerName: z.string().min(1, "Customer name is required"),
