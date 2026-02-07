@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
 import { ApiError } from "../utils/apiError.js";
+import { apiResponse } from "../utils/apiResponse.js";
 
 export const errorMiddleware = (
   err: Error,
@@ -11,15 +12,12 @@ export const errorMiddleware = (
   console.error("Error:", err);
 
   if (err instanceof ZodError) {
-    return res.status(400).json({
-      error: "Validation error",
-      details: err.errors,
-    });
+    return apiResponse(res, 400, "Validation error", err.errors);
   }
 
   if (err instanceof ApiError) {
-    return res.status(err.statusCode).json({ error: err.message });
+    return apiResponse(res, err.statusCode, err.message);
   }
 
-  return res.status(500).json({ error: "Internal server error" });
+  return apiResponse(res, 500, "Internal server error");
 };

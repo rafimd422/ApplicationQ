@@ -8,6 +8,7 @@ import {
 } from "../../db/schema/index.js";
 import { eq, and, asc, count } from "drizzle-orm";
 import { ApiError } from "../../utils/apiError.js";
+import { apiResponse } from "../../utils/apiResponse.js";
 import dayjs from "dayjs";
 import { logActivity } from "@/utils/activityLogger.js";
 
@@ -37,7 +38,7 @@ export const getWaitingQueue = async (
       .where(eq(appointments.status, "Scheduled"))
       .orderBy(asc(waitingQueue.queuePosition));
 
-    res.json({ queue });
+    return apiResponse(res, 200, "Queue fetched successfully", { queue });
   } catch (error) {
     next(error);
   }
@@ -67,7 +68,9 @@ export const autoAssign = async (
       .limit(1);
 
     if (!firstInQueue) {
-      return res.json({ message: "No appointments in queue", assigned: false });
+      return apiResponse(res, 200, "No appointments in queue", {
+        assigned: false,
+      });
     }
 
     const availableStaff = await db
@@ -101,10 +104,14 @@ export const autoAssign = async (
     }
 
     if (!assignedStaff) {
-      return res.json({
-        message: "No available staff with capacity for this appointment",
-        assigned: false,
-      });
+      return apiResponse(
+        res,
+        200,
+        "No available staff with capacity for this appointment",
+        {
+          assigned: false,
+        },
+      );
     }
 
     await db
@@ -139,13 +146,17 @@ export const autoAssign = async (
       },
     );
 
-    res.json({
-      message: `Appointment assigned to ${assignedStaff.name}`,
-      assigned: true,
-      staffId: assignedStaff.id,
-      staffName: assignedStaff.name,
-      appointmentId: firstInQueue.appointmentId,
-    });
+    return apiResponse(
+      res,
+      200,
+      `Appointment assigned to ${assignedStaff.name}`,
+      {
+        assigned: true,
+        staffId: assignedStaff.id,
+        staffName: assignedStaff.name,
+        appointmentId: firstInQueue.appointmentId,
+      },
+    );
   } catch (error) {
     next(error);
   }
@@ -243,12 +254,16 @@ export const manualAssign = async (
       },
     );
 
-    res.json({
-      message: `Appointment assigned to ${staffMember.name}`,
-      staffId,
-      staffName: staffMember.name,
-      appointmentId: queueItem.appointmentId,
-    });
+    return apiResponse(
+      res,
+      200,
+      `Appointment assigned to ${staffMember.name}`,
+      {
+        staffId,
+        staffName: staffMember.name,
+        appointmentId: queueItem.appointmentId,
+      },
+    );
   } catch (error) {
     next(error);
   }

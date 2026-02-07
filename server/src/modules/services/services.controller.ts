@@ -4,6 +4,7 @@ import { services } from "../../db/schema/index.js";
 import { serviceSchema, updateServiceSchema } from "./services.validation.js";
 import { eq } from "drizzle-orm";
 import { ApiError } from "../../utils/apiError.js";
+import { apiResponse } from "../../utils/apiResponse.js";
 
 export const getAllServices = async (
   req: Request,
@@ -15,7 +16,9 @@ export const getAllServices = async (
       .select()
       .from(services)
       .orderBy(services.serviceName);
-    res.json({ services: allServices });
+    return apiResponse(res, 200, "Services fetched successfully", {
+      services: allServices,
+    });
   } catch (error) {
     next(error);
   }
@@ -29,9 +32,9 @@ export const createService = async (
   try {
     const data = serviceSchema.parse(req.body);
     const [newService] = await db.insert(services).values(data).returning();
-    res
-      .status(201)
-      .json({ service: newService, message: "Service created successfully" });
+    return apiResponse(res, 201, "Service created successfully", {
+      service: newService,
+    });
   } catch (error) {
     next(error);
   }
@@ -54,7 +57,7 @@ export const getServiceById = async (
       throw new ApiError("Service not found", 404);
     }
 
-    res.json({ service });
+    return apiResponse(res, 200, "Service fetched successfully", { service });
   } catch (error) {
     next(error);
   }
@@ -79,9 +82,8 @@ export const updateService = async (
       throw new ApiError("Service not found", 404);
     }
 
-    res.json({
+    return apiResponse(res, 200, "Service updated successfully", {
       service: updatedService,
-      message: "Service updated successfully",
     });
   } catch (error) {
     next(error);
@@ -104,7 +106,7 @@ export const deleteService = async (
       throw new ApiError("Service not found", 404);
     }
 
-    res.json({ message: "Service deleted successfully" });
+    return apiResponse(res, 200, "Service deleted successfully");
   } catch (error) {
     next(error);
   }

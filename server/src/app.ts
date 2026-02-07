@@ -3,9 +3,9 @@ import cors from "cors";
 import { config } from "./config/index.js";
 import routes from "./modules/index.js";
 import { errorMiddleware } from "./middlewares/error.middleware.js";
+import { apiResponse } from "./utils/apiResponse.js";
 
 const app = express();
-
 
 app.use(
   cors({
@@ -15,14 +15,14 @@ app.use(
 );
 app.use(express.json());
 
-
 app.get("/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+  return apiResponse(res, 200, "Health check successful", {
+    status: "ok",
+    timestamp: new Date().toISOString(),
+  });
 });
 
-
 app.use("/api", routes);
-
 
 app.use(errorMiddleware);
 

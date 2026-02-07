@@ -4,6 +4,7 @@ import { staff, appointments } from "../../db/schema/index.js";
 import { staffSchema, updateStaffSchema } from "./staff.validation.js";
 import { eq, and, count } from "drizzle-orm";
 import { ApiError } from "../../utils/apiError.js";
+import { apiResponse } from "../../utils/apiResponse.js";
 
 export const getAllStaff = async (
   req: Request,
@@ -12,7 +13,9 @@ export const getAllStaff = async (
 ) => {
   try {
     const allStaff = await db.select().from(staff).orderBy(staff.name);
-    res.json({ staff: allStaff });
+    return apiResponse(res, 200, "Staff fetched successfully", {
+      staff: allStaff,
+    });
   } catch (error) {
     next(error);
   }
@@ -26,9 +29,9 @@ export const createStaff = async (
   try {
     const data = staffSchema.parse(req.body);
     const [newStaff] = await db.insert(staff).values(data).returning();
-    res
-      .status(201)
-      .json({ staff: newStaff, message: "Staff created successfully" });
+    return apiResponse(res, 201, "Staff created successfully", {
+      staff: newStaff,
+    });
   } catch (error) {
     next(error);
   }
@@ -51,7 +54,9 @@ export const getStaffById = async (
       throw new ApiError("Staff not found", 404);
     }
 
-    res.json({ staff: staffMember });
+    return apiResponse(res, 200, "Staff fetched successfully", {
+      staff: staffMember,
+    });
   } catch (error) {
     next(error);
   }
@@ -76,7 +81,9 @@ export const updateStaff = async (
       throw new ApiError("Staff not found", 404);
     }
 
-    res.json({ staff: updatedStaff, message: "Staff updated successfully" });
+    return apiResponse(res, 200, "Staff updated successfully", {
+      staff: updatedStaff,
+    });
   } catch (error) {
     next(error);
   }
@@ -98,7 +105,7 @@ export const deleteStaff = async (
       throw new ApiError("Staff not found", 404);
     }
 
-    res.json({ message: "Staff deleted successfully" });
+    return apiResponse(res, 200, "Staff deleted successfully");
   } catch (error) {
     next(error);
   }
@@ -143,7 +150,7 @@ export const getStaffAvailability = async (
     const isAvailable =
       staffMember.availabilityStatus === "Available" && currentCount < capacity;
 
-    res.json({
+    return apiResponse(res, 200, "Staff availability fetched successfully", {
       staffId: id,
       staffName: staffMember.name,
       date,
@@ -196,7 +203,10 @@ export const getAllStaffAvailability = async (
       }),
     );
 
-    res.json({ staff: staffWithAvailability, date });
+    return apiResponse(res, 200, "Staff availability fetched successfully", {
+      staff: staffWithAvailability,
+      date,
+    });
   } catch (error) {
     next(error);
   }

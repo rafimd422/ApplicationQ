@@ -8,6 +8,7 @@ import { AuthenticatedRequest } from "../../middlewares/auth.middleware.js";
 import jwt from "jsonwebtoken";
 import { config } from "../../config/index.js";
 import { ApiError } from "../../utils/apiError.js";
+import { apiResponse } from "../../utils/apiResponse.js";
 
 export const signup = async (
   req: Request,
@@ -42,8 +43,7 @@ export const signup = async (
       expiresIn: config.jwtExpiresIn as any,
     });
 
-    res.status(201).json({
-      message: "User created successfully",
+    return apiResponse(res, 201, "User created successfully", {
       user: newUser,
       token,
     });
@@ -79,8 +79,7 @@ export const login = async (
       expiresIn: config.jwtExpiresIn as any,
     });
 
-    res.json({
-      message: "Login successful",
+    return apiResponse(res, 200, "Login successful", {
       user: {
         id: user.id,
         email: user.email,
@@ -114,7 +113,7 @@ export const getMe = async (
       throw new ApiError("User not found", 404);
     }
 
-    res.json({ user });
+    return apiResponse(res, 200, "User profile fetched successfully", { user });
   } catch (error) {
     next(error);
   }

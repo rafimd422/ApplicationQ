@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { db } from "../../config/index.js";
 import { activityLogs } from "../../db/schema/index.js";
 import { desc } from "drizzle-orm";
+import { apiResponse } from "../../utils/apiResponse.js";
 
 export const getActivityLogs = async (
   req: Request,
@@ -18,7 +19,9 @@ export const getActivityLogs = async (
       .orderBy(desc(activityLogs.createdAt))
       .limit(limitNum);
 
-    res.json({ logs });
+    return apiResponse(res, 200, "Activity logs fetched successfully", {
+      logs,
+    });
   } catch (error) {
     next(error);
   }

@@ -3,6 +3,7 @@ import { db } from "../../config/index.js";
 import { appointments, staff, waitingQueue } from "../../db/schema/index.js";
 import { eq, and, count } from "drizzle-orm";
 import dayjs from "dayjs";
+import { apiResponse } from "../../utils/apiResponse.js";
 
 export const getStats = async (
   req: Request,
@@ -70,7 +71,7 @@ export const getStats = async (
       .from(staff)
       .where(eq(staff.availabilityStatus, "Available"));
 
-    res.json({
+    return apiResponse(res, 200, "Dashboard stats fetched successfully", {
       today,
       totalAppointments: totalToday?.count || 0,
       completed: completedToday?.count || 0,
@@ -127,7 +128,10 @@ export const getStaffLoad = async (
       }),
     );
 
-    res.json({ staffLoad, date: targetDate });
+    return apiResponse(res, 200, "Staff load fetched successfully", {
+      staffLoad,
+      date: targetDate,
+    });
   } catch (error) {
     next(error);
   }

@@ -12,6 +12,7 @@ import {
 } from "./appointments.validation.js";
 import { eq, and, count } from "drizzle-orm";
 import { ApiError } from "../../utils/apiError.js";
+import { apiResponse } from "../../utils/apiResponse.js";
 import * as appointmentService from "./appointments.service.js";
 import { logActivity } from "@/utils/activityLogger.js";
 
@@ -65,7 +66,9 @@ export const getAllAppointments = async (
             appointments.appointmentTime,
           );
 
-    res.json({ appointments: result });
+    return apiResponse(res, 200, "Appointments fetched successfully", {
+      appointments: result,
+    });
   } catch (error) {
     next(error);
   }
@@ -179,13 +182,17 @@ export const createAppointment = async (
       });
     }
 
-    res.status(201).json({
-      appointment: newAppointment,
-      addedToQueue,
-      message: addedToQueue
+    return apiResponse(
+      res,
+      201,
+      addedToQueue
         ? "Appointment created and added to waiting queue"
         : "Appointment created successfully",
-    });
+      {
+        appointment: newAppointment,
+        addedToQueue,
+      },
+    );
   } catch (error) {
     next(error);
   }
@@ -223,7 +230,9 @@ export const getAppointmentById = async (
       throw new ApiError("Appointment not found", 404);
     }
 
-    res.json({ appointment });
+    return apiResponse(res, 200, "Appointment fetched successfully", {
+      appointment,
+    });
   } catch (error) {
     next(error);
   }
@@ -281,9 +290,8 @@ export const updateAppointment = async (
       await db.delete(waitingQueue).where(eq(waitingQueue.appointmentId, id));
     }
 
-    res.json({
+    return apiResponse(res, 200, "Appointment updated successfully", {
       appointment: updatedAppointment,
-      message: "Appointment updated successfully",
     });
   } catch (error) {
     next(error);
@@ -315,7 +323,7 @@ export const cancelAppointment = async (
       customerName: appointment.customerName,
     });
 
-    res.json({ message: "Appointment cancelled successfully" });
+    return apiResponse(res, 200, "Appointment cancelled successfully");
   } catch (error) {
     next(error);
   }
@@ -344,7 +352,9 @@ export const completeAppointment = async (
       customerName: appointment.customerName,
     });
 
-    res.json({ appointment, message: "Appointment marked as completed" });
+    return apiResponse(res, 200, "Appointment marked as completed", {
+      appointment,
+    });
   } catch (error) {
     next(error);
   }
@@ -373,7 +383,9 @@ export const noShowAppointment = async (
       customerName: appointment.customerName,
     });
 
-    res.json({ appointment, message: "Appointment marked as no-show" });
+    return apiResponse(res, 200, "Appointment marked as no-show", {
+      appointment,
+    });
   } catch (error) {
     next(error);
   }
